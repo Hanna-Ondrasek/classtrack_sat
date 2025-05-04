@@ -1,6 +1,3 @@
-cd client
-npm install
-npm run dev
 
 "use client";
 
