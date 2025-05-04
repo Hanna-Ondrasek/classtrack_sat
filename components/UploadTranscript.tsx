@@ -1,3 +1,7 @@
+cd client
+npm install
+npm run dev
+
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -63,16 +67,31 @@ export default function UploadTranscript() {
 
     if (selectedFile) {
       setIsProcessing(true);
-      Tesseract.recognize(
-        selectedFile,
-        'eng',
-        { logger: m => console.log(m) }
-      ).then(({ data: { text } }) => {
-        setExtractedText(text);
+      function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const selectedFile = e.target.files?.[0];
+  setFile(selectedFile ?? null);
+
+  if (selectedFile) {
+    setIsProcessing(true);
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    fetch("http://localhost:3001/upload", {
+      method: "POST",
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        setExtractedText(data.text);
+        setIsProcessing(false);
+      })
+      .catch(err => {
+        console.error(err);
         setIsProcessing(false);
       });
-    }
   }
+}
+
 
   useEffect(() => {
     if (extractedText) {
