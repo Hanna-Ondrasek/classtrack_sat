@@ -71,9 +71,7 @@ export default function HeroSectionOne() {
           <button onClick={() => router.push("/upload")} className="w-60 transform rounded-lg bg-black px-6 py-2 font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200">
             Upload Transcript
           </button>
-          <button className="w-60 transform rounded-lg border border-gray-300 bg-white px-6 py-2 font-medium text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-100 dark:border-gray-700 dark:bg-black dark:text-white dark:hover:bg-gray-900">
-          Enter Grades Manually
-          </button>
+          
         </motion.div>
         <motion.div
           initial={{
@@ -106,6 +104,7 @@ export default function HeroSectionOne() {
 }
 
 const Navbar = () => {
+  const router2 = useRouter();
   return (
     <nav className="flex w-full items-center justify-between border-t border-b border-neutral-200 px-4 py-4 dark:border-neutral-800">
       <div className="flex items-center gap-2">
@@ -114,9 +113,13 @@ const Navbar = () => {
           </div>
         <h1 className="text-base font-bold md:text-2xl">ClassTrack SAT</h1>
       </div>
-      <button className="w-24 transform rounded-lg bg-black px-6 py-2 font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-gray-800 md:w-32 dark:bg-white dark:text-black dark:hover:bg-gray-200">
-        Login
+      
+      
+      <button onClick={() => router2.push("https://www.sundai.club/projects/afec3e0b-19da-4170-9509-0e293e639c09")} className="w-32 transform rounded-lg bg-gray-100 px-6 py-2 font-medium text-black transition-all duration-300 hover:bg-gray-200">
+        Made at Sundai
       </button>
     </nav>
   );
 };
+
+
