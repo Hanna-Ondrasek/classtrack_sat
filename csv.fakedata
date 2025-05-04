@@ -1,0 +1,41 @@
+Student Name,Subject,Letter Grade,SAT Score Range
+Alice Johnson,Calculus,A,700-800
+Alice Johnson,English,B,600-699
+Alice Johnson,History,A,700-800
+Alice Johnson,Science,B,600-699
+Bob Smith,Algebra,C,500-599
+Bob Smith,English,D,400-499
+Bob Smith,History,C,500-599
+Bob Smith,Science,F,Below 400
+Clara Lee,Pre-Calculus,B,600-699
+Clara Lee,English,A,700-800
+Clara Lee,History,B,600-699
+Clara Lee,Science,A,700-800
+David Nguyen,Calculus,A,700-800
+David Nguyen,English,A,700-800
+David Nguyen,History,A,700-800
+David Nguyen,Science,A,700-800
+Emily Chen,Pre-Calculus,B,600-699
+Emily Chen,English,B,600-699
+Emily Chen,History,A,700-800
+Emily Chen,Science,C,500-599
+Frank Turner,Algebra,D,400-499
+Frank Turner,English,C,500-599
+Frank Turner,History,D,400-499
+Frank Turner,Science,C,500-599
+Grace Patel,Calculus,A,700-800
+Grace Patel,English,B,600-699
+Grace Patel,History,B,600-699
+Grace Patel,Science,A,700-800
+Henry Kim,Pre-Calculus,B,600-699
+Henry Kim,English,C,500-599
+Henry Kim,History,C,500-599
+Henry Kim,Science,B,600-699
+Isabella Gomez,Algebra,C,500-599
+Isabella Gomez,English,B,600-699
+Isabella Gomez,History,A,700-800
+Isabella Gomez,Science,A,700-800
+Jack Wilson,Algebra,F,Below 400
+Jack Wilson,English,D,400-499
+Jack Wilson,History,D,400-499
+Jack Wilson,Science,F,Below 400
