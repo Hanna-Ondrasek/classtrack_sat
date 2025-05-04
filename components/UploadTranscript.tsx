@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import Tesseract from "tesseract.js";
 
+
 function estimateSATScores(coursesAndGrades: { course: string; grade: string }[]) {
   let mathScore = 500;
   let englishScore = 500;
