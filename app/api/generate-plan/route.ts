@@ -30,7 +30,7 @@ const apiKey = process.env.OPENROUTER_API_KEY;
     headers: {
         "Authorization": `Bearer ${apiKey!}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:3000",
+        "HTTP-Referer": "https://classtrack-sat.vercel.app/upload",
         "X-Title": "SAT Plan Generator",
       },
       
