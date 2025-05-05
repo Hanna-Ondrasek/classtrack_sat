@@ -12,7 +12,7 @@ Here are the student's courses and grades:
 
 ${coursesText}
 
-Please do the following:
+Please do the following (and keep it concise to be within token limits):
 1. Determine what SAT Math topics they should review based on the courses they have and haven't taken.
 2. Determine what SAT English topics they should review based on the courses they have and haven't taken.
 3. Provide a 7-day personalized study plan for Math and English based on this.
