@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect } from "react";
 import Tesseract from "tesseract.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
@@ -12,31 +11,21 @@ type EstimatedScores = { math: number; english: number };
 
 // --- API setup ---
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? "";
-const genAI = new GoogleGenerativeAI(apiKey);
 
 async function generateStudyPlanWithGemini(coursesAndGrades: CourseGrade[]) {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
-  const coursesText = coursesAndGrades.map(c => `${c.course} - ${c.grade}`).join("\n");
+  const response = await fetch("/api/generate-plan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ coursesAndGrades }),
+  });
 
-  const prompt = `
-You are an SAT study advisor.
-
-Here are the student's courses and grades:
-
-${coursesText}
-
-Please do the following:
-1. Determine what SAT Math topics they should review based on the courses they have and haven't taken.
-2. Determine what SAT English topics they should review based on the courses they have and haven't taken.
-3. Provide a 7-day personalized study plan for Math and English based on this.
-
-Return it in organized, readable text.
-`;
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return await response.text();
+  const data = await response.json();
+  return data.plan;
 }
+
+
 
 function estimateSATScores(coursesAndGrades: CourseGrade[]): EstimatedScores {
   let math = 500, english = 510;
