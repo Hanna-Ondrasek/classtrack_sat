@@ -39,15 +39,23 @@ Return it in organized, readable text.
 }
 
 function estimateSATScores(coursesAndGrades: CourseGrade[]): EstimatedScores {
-  let math = 500, english = 500;
+  let math = 500, english = 510;
 
   coursesAndGrades.forEach(({ course }) => {
     const name = course.toLowerCase();
-    if (name.includes("calculus")) math += 60;
-    else if (name.includes("pre-calculus") || name.includes("precalculus")) math += 40;
-    else if (name.includes("algebra")) math += 20;
+  
+    if (name.includes("pre-calculus") || name.includes("precalculus")) {
+      math += 50;
+    } else if (/\bcalculus\b/.test(name)) {
+      math += 200;
+    } else if (name.includes("algebra")) {
+      math += 20;
+    }
+  
     if (name.includes("physics")) math += 30;
-    if (name.includes("ap english") || name.includes("ap lang") || name.includes("ap lit")) english += 40;
+  
+    if (name.includes("ap lit")) english += 90;
+    else if (name.includes("ap english") || name.includes("ap lang")) english += 170;
     else if (name.includes("journalism") || name.includes("writing")) english += 30;
     else if (name.includes("english")) english += 10;
   });
@@ -73,26 +81,44 @@ export default function UploadTranscript() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0];
     setFile(selectedFile ?? null);
-
+  
     if (selectedFile) {
       setIsProcessing(true);
-      Tesseract.recognize(selectedFile, 'eng', { logger: m => console.log(m) })
+  
+      Tesseract.recognize(selectedFile, 'eng', {
+        logger: m => console.log(m),
+      })
         .then(({ data: { text } }) => {
-          setExtractedText(text);
+          // Postprocess the extracted text to fix OCR mistakes
+          const fixedText = text
+            .split("\n")
+            .map(line => line.replace(/^([a-z])/, (_, c) => c.toUpperCase()))
+            .join("\n")
+            .replace(/(\bB)\s*\+/g, '$1+')
+            .replace(/(\bA)\s*\+/g, '$1+');
+  
+          setExtractedText(fixedText);
+        })
+        .catch(err => {
+          console.error("OCR failed", err);
+          setExtractedText("Failed to extract text.");
+        })
+        .finally(() => {
           setIsProcessing(false);
         });
     }
   }
+  
 
   useEffect(() => {
     if (extractedText) {
-      const gradePattern = /\b(A\+?|A-|B\+?|B-|C\+?|C-|D\+?|D-|F)\b/;
+      const gradePattern = /^(.*?)-\s*(A\+?|A-|B\+?|B-|C\+?|C-|D\+?|D-|F)$/;
       const lines = extractedText.split("\n").filter(line => line.trim() !== "");
 
       const parsed: CourseGrade[] = lines.map(line => {
         const match = line.match(gradePattern);
         return match
-          ? { course: line.replace(match[0], "").trim(), grade: match[0] }
+          ? { course: match[1].trim(), grade: match[2] }
           : { course: line, grade: "N/A" };
       });
 
@@ -115,7 +141,6 @@ export default function UploadTranscript() {
         <h1 className="text-3xl font-bold mb-6 text-center">Upload Transcript & Get Your Personalized SAT Plan</h1>
 
         <div className="flex flex-col md:flex-row gap-10">
-          {/* Upload Box */}
           <div className="flex-1 border p-6 rounded-lg bg-white dark:bg-neutral-800">
             <input type="file" accept="image/*" onChange={handleFileChange} ref={inputRef} style={{ display: "none" }} />
             <button onClick={handleButtonClick} className="w-full rounded-lg bg-blue-500 px-6 py-3 text-white text-lg hover:bg-blue-600">
@@ -143,7 +168,6 @@ export default function UploadTranscript() {
             )}
           </div>
 
-          {/* Instructions Box */}
           <div className="w-full md:w-1/3 border p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800">
             <h2 className="text-lg font-semibold mb-2">📌 Upload Instructions</h2>
             <p>Please upload only:</p>
@@ -155,7 +179,6 @@ export default function UploadTranscript() {
           </div>
         </div>
 
-        {/* Results */}
         {estimatedScores && (
           <div className="mt-10 border p-6 rounded-lg bg-green-50 dark:bg-neutral-800">
             <h2 className="text-xl font-semibold mb-2">Estimated SAT Scores:</h2>
