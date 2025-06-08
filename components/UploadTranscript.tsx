@@ -8,7 +8,13 @@ import Navbar from "@/components/Navbar";
 
 // --- TYPES ---
 type CourseGrade = { course: string; grade: string };
-type EstimatedScores = { math: number; english: number };
+
+// New type to detail potential increase per course
+type PotentialCourseGain = {
+  courseName: string; // The user-friendly name of the course
+  subject: 'Math' | 'English'; // Which subject the points apply to
+  points: number; // The potential points increase
+};
 
 // --- API setup ---
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? "";
@@ -26,36 +32,57 @@ async function generateStudyPlanWithGemini(coursesAndGrades: CourseGrade[]) {
   return data.plan;
 }
 
-function estimateSATScores(coursesAndGrades: CourseGrade[]): EstimatedScores {
-  let math = 500, english = 510;
+// Define a list of high-impact courses and their potential points
+// 'matches' are strings to check against taken course names (case-insensitive, includes check)
+const HighImpactCourses = [
+  { matches: ["calculus"], displayName: "Calculus", mathPoints: 200 },
+  { matches: ["ap english", "ap lang"], displayName: "AP English/Language", englishPoints: 170 },
+  { matches: ["ap lit"], displayName: "AP Literature", englishPoints: 90 },
+  { matches: ["pre-calculus", "precalculus"], displayName: "Pre-Calculus", mathPoints: 50 },
+  { matches: ["algebra"], displayName: "Algebra", mathPoints: 20 },
+  { matches: ["physics"], displayName: "Physics", mathPoints: 30 },
+  { matches: ["journalism", "writing"], displayName: "Journalism/Writing", englishPoints: 30 },
+  { matches: ["english"], displayName: "General English", englishPoints: 10 },
+];
 
-  coursesAndGrades.forEach(({ course }) => {
-    const name = course.toLowerCase();
+// New function to calculate potential gains from courses the student hasn't taken
+function getPotentialGainsFromUntakenCourses(takenCourses: CourseGrade[]): PotentialCourseGain[] {
+  const takenCourseLowerNames = new Set(takenCourses.map(c => c.course.toLowerCase()));
+  const potentialGains: PotentialCourseGain[] = [];
 
-    if (name.includes("pre-calculus") || name.includes("precalculus")) {
-      math += 50;
-    } else if (/\bcalculus\b/.test(name)) {
-      math += 200;
-    } else if (name.includes("algebra")) {
-      math += 20;
+  HighImpactCourses.forEach(impactCourse => {
+    // Check if ANY of the 'matches' strings for this impactCourse are included in ANY taken course name
+    const hasTakenThisType = impactCourse.matches.some(matchStr =>
+      Array.from(takenCourseLowerNames).some(takenName => takenName.includes(matchStr))
+    );
+
+    if (!hasTakenThisType) {
+      if (impactCourse.mathPoints && impactCourse.mathPoints > 0) {
+        potentialGains.push({
+          courseName: impactCourse.displayName,
+          subject: 'Math',
+          points: impactCourse.mathPoints,
+        });
+      }
+      if (impactCourse.englishPoints && impactCourse.englishPoints > 0) {
+        potentialGains.push({
+          courseName: impactCourse.displayName,
+          subject: 'English',
+          points: impactCourse.englishPoints,
+        });
+      }
     }
-
-    if (name.includes("physics")) math += 30;
-
-    if (name.includes("ap lit")) english += 90;
-    else if (name.includes("ap english") || name.includes("ap lang")) english += 170;
-    else if (name.includes("journalism") || name.includes("writing")) english += 30;
-    else if (name.includes("english")) english += 10;
   });
 
-  return { math: Math.min(800, Math.max(400, math)), english: Math.min(800, Math.max(400, english)) };
+  return potentialGains;
 }
 
 export default function UploadTranscript() {
   const [file, setFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState<string>("");
   const [structuredCourses, setStructuredCourses] = useState<CourseGrade[]>([]);
-  const [estimatedScores, setEstimatedScores] = useState<EstimatedScores | null>(null);
+  // State to store the detailed potential gains per course
+  const [potentialCourseGains, setPotentialCourseGains] = useState<PotentialCourseGain[] | null>(null);
   const [studyPlan, setStudyPlan] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState<boolean>(false);
@@ -73,6 +100,12 @@ export default function UploadTranscript() {
 
     if (selectedFile) {
       setIsProcessing(true);
+      // Reset plan related states when new file is uploaded
+      setExtractedText("");
+      setStructuredCourses([]);
+      setPotentialCourseGains(null); // Reset potential gains too
+      setStudyPlan("");
+      setIsGeneratingPlan(false);
 
       Tesseract.recognize(selectedFile, 'eng', {
         logger: m => console.log(m),
@@ -110,8 +143,9 @@ export default function UploadTranscript() {
       });
 
       setStructuredCourses(parsed);
-      const scores = estimateSATScores(parsed);
-      setEstimatedScores(scores);
+      // Calculate and set the detailed potential gains
+      const gains = getPotentialGainsFromUntakenCourses(parsed);
+      setPotentialCourseGains(gains);
 
       setIsGeneratingPlan(true);
       generateStudyPlanWithGemini(parsed)
@@ -120,8 +154,6 @@ export default function UploadTranscript() {
         .finally(() => setIsGeneratingPlan(false));
     }
   }, [extractedText]);
-
-  // Removed the automatic redirection useEffect
 
   const handleGoToPlan = () => {
     if (studyPlan && studyPlan !== "Failed to generate study plan.") {
@@ -175,19 +207,31 @@ export default function UploadTranscript() {
           </div>
         </div>
 
-        {estimatedScores && (
+        {/* Updated display for potential score increases, showing specific courses, without markdown bolding */}
+        {potentialCourseGains && potentialCourseGains.length > 0 && (
           <div className="mt-10 border p-6 rounded-lg bg-green-50 dark:bg-neutral-800">
-            <h2 className="text-xl font-semibold mb-2">Estimated SAT Scores:</h2>
-            <p>📊 Math: {estimatedScores.math}</p>
-            <p>📖 English: {estimatedScores.english}</p>
+            <h2 className="text-xl font-semibold mb-2">Potential Score Increases from Future Coursework:</h2>
+            <ul className="list-disc ml-5">
+              {potentialCourseGains.map((gain, index) => (
+                <li key={index}>
+                  If you take {gain.courseName}, your {gain.subject} score can increase by up to {gain.points} points!
+                </li>
+              ))}
+            </ul>
           </div>
         )}
+        {potentialCourseGains && potentialCourseGains.length === 0 && (
+            <div className="mt-10 border p-6 rounded-lg bg-green-50 dark:bg-neutral-800">
+                <h2 className="text-xl font-semibold mb-2">Potential Score Increases from Future Coursework:</h2>
+                <p>Based on your transcript, you've already taken many courses that build SAT readiness!</p>
+            </div>
+        )}
+
 
         {isGeneratingPlan && (
           <p className="mt-6 text-blue-600">Generating personalized study plan... please wait.</p>
         )}
 
-        {/* Display the button only if a plan is available and not currently generating */}
         {studyPlan && !isGeneratingPlan && studyPlan !== "Failed to generate study plan." && (
           <div className="mt-6 text-center">
             <p className="mb-4 text-green-600 font-semibold">Your study plan has been generated!</p>
