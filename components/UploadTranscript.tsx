@@ -1,3 +1,4 @@
+// components/UploadTranscript.tsx
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -25,14 +26,12 @@ async function generateStudyPlanWithGemini(coursesAndGrades: CourseGrade[]) {
   return data.plan;
 }
 
-
-
 function estimateSATScores(coursesAndGrades: CourseGrade[]): EstimatedScores {
   let math = 500, english = 510;
 
   coursesAndGrades.forEach(({ course }) => {
     const name = course.toLowerCase();
-  
+
     if (name.includes("pre-calculus") || name.includes("precalculus")) {
       math += 50;
     } else if (/\bcalculus\b/.test(name)) {
@@ -40,9 +39,9 @@ function estimateSATScores(coursesAndGrades: CourseGrade[]): EstimatedScores {
     } else if (name.includes("algebra")) {
       math += 20;
     }
-  
+
     if (name.includes("physics")) math += 30;
-  
+
     if (name.includes("ap lit")) english += 90;
     else if (name.includes("ap english") || name.includes("ap lang")) english += 170;
     else if (name.includes("journalism") || name.includes("writing")) english += 30;
@@ -62,6 +61,7 @@ export default function UploadTranscript() {
   const [isGeneratingPlan, setIsGeneratingPlan] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const router = useRouter();
 
   function handleButtonClick() {
     inputRef.current?.click();
@@ -70,22 +70,21 @@ export default function UploadTranscript() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selectedFile = e.target.files?.[0];
     setFile(selectedFile ?? null);
-  
+
     if (selectedFile) {
       setIsProcessing(true);
-  
+
       Tesseract.recognize(selectedFile, 'eng', {
         logger: m => console.log(m),
       })
         .then(({ data: { text } }) => {
-          // Postprocess the extracted text to fix OCR mistakes
           const fixedText = text
             .split("\n")
             .map(line => line.replace(/^([a-z])/, (_, c) => c.toUpperCase()))
             .join("\n")
             .replace(/(\bB)\s*\+/g, '$1+')
             .replace(/(\bA)\s*\+/g, '$1+');
-  
+
           setExtractedText(fixedText);
         })
         .catch(err => {
@@ -97,7 +96,6 @@ export default function UploadTranscript() {
         });
     }
   }
-  
 
   useEffect(() => {
     if (extractedText) {
@@ -122,6 +120,15 @@ export default function UploadTranscript() {
         .finally(() => setIsGeneratingPlan(false));
     }
   }, [extractedText]);
+
+  // Removed the automatic redirection useEffect
+
+  const handleGoToPlan = () => {
+    if (studyPlan && studyPlan !== "Failed to generate study plan.") {
+      const encodedStudyPlan = encodeURIComponent(studyPlan);
+      router.push(`/daybyday?plan=${encodedStudyPlan}`);
+    }
+  };
 
   return (
     <div>
@@ -180,11 +187,21 @@ export default function UploadTranscript() {
           <p className="mt-6 text-blue-600">Generating personalized study plan... please wait.</p>
         )}
 
-        {studyPlan && !isGeneratingPlan && (
-          <div className="mt-6 border p-6 rounded-lg bg-purple-50 dark:bg-neutral-800">
-            <h2 className="text-xl font-semibold mb-2">Personalized Study Plan:</h2>
-            <p className="whitespace-pre-wrap">{studyPlan}</p>
+        {/* Display the button only if a plan is available and not currently generating */}
+        {studyPlan && !isGeneratingPlan && studyPlan !== "Failed to generate study plan." && (
+          <div className="mt-6 text-center">
+            <p className="mb-4 text-green-600 font-semibold">Your study plan has been generated!</p>
+            <button
+              onClick={handleGoToPlan}
+              className="rounded-lg bg-purple-600 px-8 py-3 text-white text-lg font-semibold hover:bg-purple-700 transition duration-300 ease-in-out"
+            >
+              Take me to my personalized study plan!
+            </button>
           </div>
+        )}
+
+        {studyPlan === "Failed to generate study plan." && !isGeneratingPlan && (
+          <p className="mt-6 text-center text-red-600">Failed to generate study plan. Please try again.</p>
         )}
       </div>
     </div>
