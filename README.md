@@ -22,7 +22,12 @@ The main UI is implemented in `components/UploadTranscript.tsx`.
 ## Screenshots
 
 
+
+
+<img width="1001" height="985" alt="image" src="https://github.com/user-attachments/assets/1d3c5065-ba75-41ae-9474-95420774c402" />
+<img width="1802" height="740" alt="image" src="https://github.com/user-attachments/assets/1d32a372-74a0-4f0b-8b20-e36ecafbe562" />
 <img width="1553" height="1026" alt="image" src="https://github.com/user-attachments/assets/6cea1ba6-ad7d-41cb-8895-b904774c73ba" />
+
 
 ---
 
